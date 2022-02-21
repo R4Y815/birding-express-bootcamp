@@ -4,7 +4,17 @@ import methodOverride from 'method-override';
 /* import { add, read, edit, write } from './jsonFileStorage.js'; */
 /* import { checkNullEntry } from './validation.js'; */
 
-const { Client } = pg;
+/* POSTGRESQL STACK BELOW */
+/* Connecting database to server */
+const { Pool } = pg;
+const pgConnectionConfigs = {
+  user: 'raytor27',
+  host: 'localhost',
+  database: 'birding',
+  port: 5432, // Postgres server always runs on this port
+};
+
+const pool = new Pool (pgConnectionConfigs);
 
 const app = express();
 const port = 3008;
@@ -19,22 +29,6 @@ app.use(express.static('public'));
 // Set view engine
 app.set('view engine', 'ejs');
 
-/* POSTGRESQL STACK BELOW */
-/* Connecting database to server */
-const pgConnectionConfigs = {
-  user: 'raytor27',
-  host: 'localhost',
-  database: 'birding',
-  port: 5432, // Postgres server always runs on this port
-};
-
-/* variable to use for connection */
-const client = new Client(pgConnectionConfigs);
-
-/* make the connection to the server */
-client.connect();
-console.log('Connection Link: ON \n');
-
 /* query done callback */ 
 const whenQueryDone = (error, result) => {
   /* this error is anything that goes wrong with the query */
@@ -44,13 +38,9 @@ const whenQueryDone = (error, result) => {
     /* rows key has the data */
     console.log(result.rows);
   }
-  /* close the connection */
-  client.end();
-};
-
-function collectNewData () {
 
 };
+
 
 
 /* POSTGRESQL STACK ABOVE */
@@ -69,7 +59,7 @@ app.post('/note', (req, res) => {
   const inputData = [formData.date, formData.behaviour, formData.flock_size];
   console.log(inputData);
   const logEntry = 'INSERT INTO notes (date, behaviour, flock_size) VALUES ($1, $2, $3);';
-  client.query(logEntry, inputData, whenQueryDone);
+  pool.query(logEntry, inputData, whenQueryDone);
   res.send('test input launched towards DB.');
 });
 
@@ -80,17 +70,15 @@ app.get('/note/:index', (req, res) => {
   const { index } = req.params;
   const dataIndex = [index];
   const get1Row = 'SELECT * FROM notes WHERE id = $1;';
-  client.query(get1Row, dataIndex, (err, results) => {
+  pool.query(get1Row, dataIndex, (err, results) => {
     if (err) {
       console.log('client query error =', err);
-      client.end();
       return;
     }
     console.log(results.rows[0]);
     const resultOut = results.rows[0];
     const content = { index:index, date: resultOut.date,  behaviour: resultOut.behaviour, flockSize: resultOut.flock_size };
     res.render('sighting', content);
-    client.end();
   });
 });
 
@@ -98,7 +86,7 @@ app.get('/note/:index', (req, res) => {
 app.get('/', (_, res) => {
   /* draw out data from postgresSQL */
   const getAllRows = 'SELECT * FROM notes';
-  client.query(getAllRows, (err, results) => {
+  pool.query(getAllRows, (err, results) => {
     if (err) {
       console.log('client query error =', err);
       client.end();
@@ -116,21 +104,18 @@ app.get('/', (_, res) => {
 app.get('/note/:index/edit', (req, res) => {
   const { index } = req.params;
   const dataIndex = [index];
-    const get1Row = 'SELECT * FROM notes WHERE id = $1;';
-  client.query(get1Row, dataIndex, (err, results) => {
+  const get1Row = 'SELECT * FROM notes WHERE id = $1;';
+  pool.query(get1Row, dataIndex, (err, results) => {
     if (err) {
       console.log('client query error =', err);
-      client.end();
       return;
     }
     console.log(results.rows[0]);
     const resultOut = results.rows[0];
     const content = { index:index, date: resultOut.date,  behaviour: resultOut.behaviour, flockSize: resultOut.flock_size };
     res.render('edit', content);
-    client.end();
   });
 });
-
 
 /* ########## OLD CODE ############################ */
 
