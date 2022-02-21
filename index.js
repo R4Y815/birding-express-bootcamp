@@ -58,12 +58,22 @@ app.post('/note', (req, res) => {
   console.log(formData);
   const inputData = [formData.date, formData.behaviour, formData.flock_size];
   console.log(inputData);
-  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size) VALUES ($1, $2, $3);';
-  pool.query(logEntry, inputData, whenQueryDone);
-  res.send('test input launched towards DB.');
+  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size) VALUES ($1, $2, $3) RETURNING id;';
+  pool.query(logEntry, inputData, (error, result) => {
+  /* this error is anything that goes wrong with the query */
+    if (error) {
+      console.log('error', error);
+    } 
+      /* rows key has the data */
+      console.log(result.rows);
+      const index = result.rows[0].id;
+      console.log('index =', index);
+
+    res.redirect(301, `http://localhost:${port}/note/${index}`);
+  });
 });
 
-/* GLOSSARY: LIST OF NOTES */
+/* specific note */
 app.get('/note/:index', (req, res) => {
 /*   let sighting;
   let resultOut; */
@@ -85,22 +95,21 @@ app.get('/note/:index', (req, res) => {
 /* HOME PAGE to show list of BIRD peepings */
 app.get('/', (_, res) => {
   /* draw out data from postgresSQL */
-  const getAllRows = 'SELECT * FROM notes';
+  const getAllRows = 'SELECT * FROM notes ORDER BY id ASC';
   pool.query(getAllRows, (err, results) => {
     if (err) {
       console.log('client query error =', err);
-      client.end();
       return;
     }
     console.log(results.rows);
-    const dbObjArr = { results: results.rows };
+    const dbObjArr = {results: results.rows};
     console.log(dbObjArr);
 /*     response.send('pushed data from DB to front-end, not yet rendered page'); */
     res.render('home', dbObjArr);
   });
 });
 
-/* EDIT PAGE */
+/* EDIT PAGE - for GET  */
 app.get('/note/:index/edit', (req, res) => {
   const { index } = req.params;
   const dataIndex = [index];
@@ -116,6 +125,37 @@ app.get('/note/:index/edit', (req, res) => {
     res.render('edit', content);
   });
 });
+
+/* EDIT PAGE - for POST */
+app.put('/note/:index', (req, res) => {
+  const { index } = req.params;
+  const updateData = req.body;
+  const updDate = updateData.date;
+  const updBehaviour = updateData.behaviour;
+  const updFlockSize = updateData.flock_size;
+  console.log(updDate);
+  console.log(updBehaviour);
+  console.log(updFlockSize);
+  const editData = [updDate, updBehaviour, updFlockSize, index];
+  const updateQuery = 'UPDATE notes SET date = $1, behaviour = $2, flock_size = $3 WHERE id = $4;';
+  pool.query(updateQuery, editData, whenQueryDone);
+
+  res.redirect(301, `http://localhost:${port}/note/${index}`);
+});
+
+/* DELETE PAGE from DataBase frm Home */
+app.delete('/note/:index', (req, res) => {
+  const { index } = req.params;
+  const delData = [index];
+  const delQuery = 'DELETE FROM notes WHERE id = $1;';
+  pool.query(delQuery, delData, (err, result) => {
+    if (err) {
+      console.log('error at delete query launch', err);
+    }
+    res.redirect(301, `http://localhost:${port}`);
+  });
+});
+
 
 /* ########## OLD CODE ############################ */
 
@@ -229,8 +269,5 @@ app.delete('/sighting/:index', (request, response) => {
     });
   });
 });
-
-
-
 
 app.listen(port, () => console.log('listening on Port:', port));

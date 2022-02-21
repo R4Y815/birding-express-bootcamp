@@ -10,29 +10,29 @@
         <h3 class = "text-center">Index of Birdie Watchings</h3>
         <p></p>
 
-<% for (let i = 0; i < results.length; i += 1) { %> 
+<% results.forEach((result) => { %> 
         <li class="list-group-item px-0">
           <div class="row">
             <div class="row">
               <div class="col">
-                <a href = "./note/<%= i + 1 %>"><u>Bird Spying Index <%= i + 1 %></u></a>
+                <a href = "./note/<%= result.id  %>"><u>Bird Spying ID: <%= result.id %></u></a>
               </div>
             </div>   
             <div class="row">
-              <div class ="col-auto"><%= results[i].date %></div> |
-              <div class ="col-auto">Flock of <%= results[i].flock_size %></div> 
+              <div class ="col-auto"><%= result.date %></div> |
+              <div class ="col-auto">Flock of <%= result.flock_size %></div> 
             </div>    
             <div class="row">
-              <div class ="col-10"><i><%= results[i].behaviour %></i></div>
+              <div class ="col-10"><i><%= result.behaviour %></i></div>
               <div class ="col-2 text-end">
-                <form action="#" method="POST">  
+                <form action="/note/<%=result.id%>?_method=DELETE" method="POST">  
                   <button type="submit" class="btn-sm">Del</button>
                 </form>  
               </div>
             </div>   
           </div>
         </li>
-<% } %>
+<% });%>
       </ul>
     </div>
   </div>
