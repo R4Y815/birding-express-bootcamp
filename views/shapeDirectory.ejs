@@ -1,0 +1,33 @@
+<%- include('headerGlobal'); -%>
+<%- include('headerSortBar'); -%>
+<div class = "container">
+  <div class ="row justify-content-center">
+    <div class="card px-0" style="width: 90vw;">
+      <ul class="list-group list-group-flush">
+        <p></p>
+        <p></p>
+        <h3 class = "text-center">Sightings by Shape</h3>
+       
+
+<!-- Previous JS END -->
+<% shapes.forEach((shape) => { %>
+      <p></p>
+        <li class="list-group-item px-0">
+          <div class="row justify-content-center">
+            <div class="row d-flex justify-content-start">
+              <div class ="col-3">
+              </div>
+              <div class ="col-auto">
+                <span class="shpeTxt"><a href = "/shapes/<%= shape %>"><b><%= shape %></b></span></a> Shaped Sightings
+              </div>
+            </div>   
+            <p></p>            
+          </div>
+        </li>
+<!-- Previous JS END -->
+  <% }); %>
+      </ul>
+    </div>
+  </div>
+</div>
+<%- include('footer'); -%>

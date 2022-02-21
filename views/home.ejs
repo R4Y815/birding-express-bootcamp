@@ -1,0 +1,40 @@
+<%- include('headerGlobal'); -%>
+<%- include('headerSortBar'); -%>
+
+<div class = "container">
+  <div class ="row justify-content-center">
+    <div class="card px-0" style="width: 90vw;">
+      <ul class="list-group list-group-flush">
+        <p></p>
+        <p></p>
+        <h3 class = "text-center">Index of Birdie Watchings</h3>
+        <p></p>
+
+<% for (let i = 0; i < results.length; i += 1) { %> 
+        <li class="list-group-item px-0">
+          <div class="row">
+            <div class="row">
+              <div class="col">
+                <a href = "./note/<%= i + 1 %>"><u>Bird Spying Index <%= i + 1 %></u></a>
+              </div>
+            </div>   
+            <div class="row">
+              <div class ="col-auto"><%= results[i].date %></div> |
+              <div class ="col-auto">Flock of <%= results[i].flock_size %></div> 
+            </div>    
+            <div class="row">
+              <div class ="col-10"><i><%= results[i].behaviour %></i></div>
+              <div class ="col-2 text-end">
+                <form action="#" method="POST">  
+                  <button type="submit" class="btn-sm">Del</button>
+                </form>  
+              </div>
+            </div>   
+          </div>
+        </li>
+<% } %>
+      </ul>
+    </div>
+  </div>
+</div>
+<%- include('footer'); -%>

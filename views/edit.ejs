@@ -1,0 +1,47 @@
+ <%- include('headerGlobal'); -%>
+ <h1 class="topSpacer"><p></p>.</h1>
+ <p></p>
+  <div class ="text-center">
+  <h2>Sighting #<%= index %> </h2>
+  </div>
+<p></p>
+<div class="container ">
+  <div class="row justify-content-center">
+    <div class="card " style="width: 90vw;">
+      <ul class="list-group list-group-flush">
+        <p></p>
+      <!--  <h3 class = "text-center">Sightings List</h3> -->
+        <li class="list-group-item ">
+          <div class="row justify-content-center">
+            <div class="row px-0 ">
+              <div class ="col-12 px-0">
+                <!-- enctype="multipart/form-data" -->
+                <form action ="/note/<%= index %>?_method=PUT" method="POST"  >
+                  <div>
+                    <label for="date" class="mb-3"><b>Date:</b></label>  
+                    <input type="text" name="date" id="date"  value="<%= date %>">
+                  </div>
+                  <div>
+                    <label for="flock_size" class="mb-3"><b>Flock Size:</b></label>  
+                    <input type="text" name="flock_size" id="flock_size"  value="<%= flockSize %>">
+                  </div>
+
+                  <div>
+                    <label for="behaviour" class="mb-2"><b>Behaviour:</b></label><br>  
+                    <textarea name ="behaviour" id="behaviour" class="smBox mb-2" ><%= behaviour %></textarea>   
+                  </div>
+                   <div>
+                  <!-- <input type="hidden" name="created_Date" value="edited-<%= /* Date()  %>"></div> -->
+                  <div class="row justify-content-center">
+                    <div class="col-auto"><input type="submit" value="Submit"></div>
+                  </div> 
+                </form>
+              </div> 
+            </div>     
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<%-include('footer');-%>
