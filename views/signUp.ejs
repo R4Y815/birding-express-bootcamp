@@ -1,0 +1,42 @@
+<%- include('headerGlobal'); -%>
+<h1 class="topSpacer"><p></p>.</h1>
+  
+  </div>
+</div>
+<p></p>
+<div class="container ">
+  <div class="row justify-content-center">
+    <div class="card " style="width: 90vw;">
+      <ul class="list-group list-group-flush">
+        <p></p>
+         <h2 class="text-center">Creating Your New User Account </h2>
+        <li class="list-group-item ">
+          <div class="row justify-content-center">
+            <div class="row px-0 ">
+              <div class ="col-12 px-0">
+                <form action="/signup" method="POST">
+
+                  <div>
+                    <label for="email" class="mb-3"><b>Email :</b></label>  
+                    <input type="text" name="email" id="email" class="dateTime" value="your-email-@example.com" required>
+                  </div>
+                  <div>
+                  <div>
+                    <label for="password" class="mb-3"><b>password(longer than 8 characters):</b></label>  
+                    <input type="password" name="password" id="password" required>
+                  </div>
+                  <input type="hidden" name="created_Date" value="created-<%= Date() %>"></div>
+                  <div class="row justify-content-center">
+                    <div class="col-auto"><input type="submit" value="Submit"></div>
+                  </div> 
+                  </form>
+                </form>
+              </div> 
+            </div>     
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<%- include('footer'); -%>

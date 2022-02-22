@@ -1,8 +1,11 @@
 import pg from 'pg';
-import express from 'express';
+import express, { request } from 'express';
 import methodOverride from 'method-override';
+import cookieParser from 'cookie-parser';
+/* ##### NEED TO INSTALL COOKIE PARSER #### */
 /* import { add, read, edit, write } from './jsonFileStorage.js'; */
 /* import { checkNullEntry } from './validation.js'; */
+
 
 /* POSTGRESQL STACK BELOW */
 /* Connecting database to server */
@@ -23,6 +26,9 @@ const port = 3008;
 app.use(methodOverride('_method'));
 
 app.use(express.urlencoded({ extended: false }));
+
+/* cookie functinality within js */
+app.use(cookieParser());
 
 /* tells express how to serve static files and from 'public folder' */
 app.use(express.static('public'));
@@ -46,12 +52,16 @@ const whenQueryDone = (error, result) => {
 /* POSTGRESQL STACK ABOVE */
 
 /* NEW NOTE: RENDER  */
-app.get('/note', (_, res) => {
-  res.render('newSighting');
-});
+function newNoteEntry (_, res) {
+res.render('newSighting');
+};
 
-/* NEW NOTE: POST */
+app.get('/note', newNoteEntry);
+
+/* CREATE NEW NOTE: POST */
 app.post('/note', (req, res) => {
+  const userIdCookie = req.cookies.user_id; /* SOLVED */
+  console.log('userIdCookie =', userIdCookie);
   const formSubmitted = req.body;
   const formData = JSON.parse(JSON.stringify(formSubmitted));
   console.log(req.body);
@@ -59,15 +69,15 @@ app.post('/note', (req, res) => {
   const inputData = [formData.date, formData.behaviour, formData.flock_size];
   console.log(inputData);
   const logEntry = 'INSERT INTO notes (date, behaviour, flock_size) VALUES ($1, $2, $3) RETURNING id;';
-  pool.query(logEntry, inputData, (error, result) => {
+  pool.query(logEntry, inputData, (error, insertResult) => {
   /* this error is anything that goes wrong with the query */
     if (error) {
       console.log('error', error);
-    } 
-      /* rows key has the data */
-      console.log(result.rows);
-      const index = result.rows[0].id;
-      console.log('index =', index);
+    }
+    /* rows key has the data */
+    console.log(insertResult.rows);
+    const index = insertResult.rows[0].id;
+    console.log('index =', index);
 
     res.redirect(301, `http://localhost:${port}/note/${index}`);
   });
@@ -157,117 +167,101 @@ app.delete('/note/:index', (req, res) => {
 });
 
 
-/* ########## OLD CODE ############################ */
+/* ########## USER AUTH BELOW  ############################ */
 
-app.get('/shapes', (request, response) => {
-  read('data.json', (err, data) => {
-    const uniqueShapes = new Set();
-    data.sightings.forEach((sighting) => {
-      if(sighting.shape !== undefined) {
-        uniqueShapes.add(sighting.shape);
-        console.log(uniqueShapes);
-      }
-    });
-    response.render('shapeDirectory', { shapes: [...uniqueShapes]});
+/* Render SIGN UP FORM */
+app.get('/signup', (req, res) => {
+  res.render('signUp');
+});
+
+/* Accept POST req to create new user. */
+app.post('/signup', (req,res) => {
+  const userInfoSent = req.body;
+  const userInfo = JSON.parse(JSON.stringify(userInfoSent));
+  const userInfoData = [userInfo.email, userInfo.password];
+  const userInfoToDb = 'INSERT INTO users (email, password) VALUES ($1, $2)';
+  pool.query(userInfoToDb, userInfoData, (error, result) => {
+  /* this error is anything that goes wrong with the query */
+    if (error) {
+      console.log('error', error);
+    }
+    /* rows key has the data */
+/*     console.log(result.rows);
+    const index = result.rows[0].id; */
+   /*  console.log('index =', index); */
+    res.redirect(301, `http://localhost:${port}/`);
   });
 });
 
-app.get('/shapes/:shape', (request, response) => {
-  const { shape } = request.params;
-  const { sort } = request.query;
-  read('data.json', (err, data) => {
-    const sighting = data.sightings.filter((sighting) => sighting.shape === shape);
-    /*     if (sort === 'asc') {
-      sightings.sort(compareState);
-    } else if (sort === 'dsc') {
-      sightings.sort((s1,s2) => -1 * compareState(s1, s2));
-    } */
-    response.render('sightingsByShape', { sighting });
-  })
+/* Render form to Log In user */
+app.get('/login', (req, res) => {
+  res.render('login');
 });
 
-app.get('/sighting/:index', (request, response) => {
-  read('data.json', (_, data) => {
-    const { index } = request.params;
-    const content = { index: index, sighting: data.sightings[index] };
-    // Return HTML to client, merging "index" template with supplied data.
-    response.render('sighting', content);
+/* Accept POST req  to Log In user */
+app.post('/login', (req, res) => {
+  console.log('request came in');
+
+  const values = [req.body.email];
+
+  pool.query('SELECT * FROM users WHERE email = $1', values, (error, result) => {
+    if (error) {
+      console.log('Error executing query', error.stack);
+      res.status(503).send(result.rows);
+      return;
+    }
+
+    if (result.rows.length === 0) {
+      /* we didn't find a user with that email */
+      /* the error for pw and user email are the same */
+      /* Don't tell the user which error they got for */
+      /* security reasons, otherwise people can guess */
+      /* if a person is a user of a given service. */
+      res.status(403).send('sorry');
+      return;
+    }
+
+    const user = result.rows[0];
+    console.log('user logging in =', req.body);
+    console.log('Matched Details from Database, user = ', user);
+    if (user.password === req.body.password) {
+      res.cookie('loggedIn', true);
+      res.cookie('user_id', user.id);
+      res.send('logged in');
+     } else{
+      /* password didn't match */
+      /* the error for the pw and email are the same */
+      /* Don't tell the user which error they got for */
+      /* security reasons, otherwise people can guess */
+      /* if a person is a user of a given service. */
+      res.cookie('loggedIn', undefined);
+      res.status(403).send("sorry!");
+    }
   });
 });
 
-app.put('/sighting/:index', (request, response) => {
-  const { index } = request.params;
-  console.log('requested params = ', request.params);
-  console.log('index =', index);
-  const { editedContent } = request.body;
-  console.log('request.body', request.body);
-  console.log('editedContent =', editedContent);
-  read('data.json', (err, data) => {
-    /* Replace the data in the object at the given index */
-    data.sightings[index] = request.body; /* var['key'][index] another way to access object array */
-    write('data.json', data, (err) => {
-      read('data.json', (err, data) => {
-        const content = { index: index, sighting: data.sightings[index] };
-        // Return HTML to client, merging "index" template with supplied data.
-        response.render('sighting', content);
-      });
-    });
-  });
-});
-
-app.get('/sighting', (request, response) => {
-  response.render('newSighting');
-});
-
-app.post('/sighting', (request, response) => {
-  /* console.log('request.body =', request.body); */
-  const formSubmitted = request.body;
-  const formData = JSON.parse(JSON.stringify(formSubmitted));
-  console.log(formData);
-  const checkResult = checkNullEntry(formData);
-  console.log('checkResult =', checkResult);
-  if (checkResult === 1) {
-    add('data.json', 'sightings', request.body, (callBack) => {
-      if (callBack) {
-        read('data.json', (_, data) => {
-          const latestIndex = data.sightings.length - 1;
-          response.redirect(301, `http://localhost:${port}/sighting/${latestIndex}`);
-        });
-        return;
-      }
-      response.status(500).send('DB write error.');
-    });
-  } else if (checkResult === 2) {
-    /* */
-    const content = { formData };
-    /* */
-    console.log(request.url);
-    const prevRoute = request.url;
-    response.send('Please fill up all fields');
-   /*  response.render('newSightingAgain', content); */
+/* Ficticious Route Path to represent a path that requires authentication to visit */
+app.get('/user-dashboard', (req, res) => {
+  console.log(req.cookies);
+  if (req.cookies.loggedIn === undefined) {
+    res.status(403).send('sorry, Please Log In....');
+    return;
   }
 
 });
 
-app.get('/sighting/:index/edit', (request, response) => {
-  /* Retrieve current recipe data and render it */
-  read('data.json', (err, jsonData) => {
-    const { index } = request.params;
-    const content = { index: index, sighting: jsonData.sightings[index] };
-    /* pass the sighting Index to the edit form for the PUT request URL */
-    response.render('edit', content);
-  });
+/* Log User out, delete their cookie */
+app.delete('/logout', (req, res) => { 
+  res.render('home');
 });
 
-app.delete('/sighting/:index', (request, response) => {
-  /* Remove element from DB at given index */
-  const { index } = request.params;
-  read('data.json', (err, data) => {
-    data.sightings.splice(index, 1);
-    write('data.json', data, (err) => {
-      response.redirect(301, `http://localhost:${port}/`);
-    });
-  });
-});
+
+
+
+
+
+
+
+/* ########## USER AUTH ABOVE  ############################ */
 
 app.listen(port, () => console.log('listening on Port:', port));
