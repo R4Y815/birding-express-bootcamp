@@ -22,13 +22,13 @@ const pool = new Pool (pgConnectionConfigs);
 const app = express();
 const port = 3008;
 
+/* cookie functinality within js */
+app.use(cookieParser());
+
 /* Override POST requests with query param ?_method=PUT to be PUT requests */
 app.use(methodOverride('_method'));
 
 app.use(express.urlencoded({ extended: false }));
-
-/* cookie functinality within js */
-app.use(cookieParser());
 
 /* tells express how to serve static files and from 'public folder' */
 app.use(express.static('public'));
@@ -52,23 +52,24 @@ const whenQueryDone = (error, result) => {
 /* POSTGRESQL STACK ABOVE */
 
 /* NEW NOTE: RENDER  */
-function newNoteEntry (_, res) {
-res.render('newSighting');
-};
+function newNoteEntry(_, res) {
+  res.render('newSighting');
+}
 
 app.get('/note', newNoteEntry);
 
 /* CREATE NEW NOTE: POST */
 app.post('/note', (req, res) => {
-  const userIdCookie = req.cookies.user_id; /* SOLVED */
-  console.log('userIdCookie =', userIdCookie);
+  console.dir(req.cookies.loggedIn);
+  console.dir(req.cookies.user_id);
+  const userId = req.cookies.user_id;
   const formSubmitted = req.body;
   const formData = JSON.parse(JSON.stringify(formSubmitted));
-  console.log(req.body);
-  console.log(formData);
-  const inputData = [formData.date, formData.behaviour, formData.flock_size];
-  console.log(inputData);
-  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size) VALUES ($1, $2, $3) RETURNING id;';
+/*   console.log(req.body);
+  console.log(formData); */
+  const inputData = [formData.date, formData.behaviour, formData.flock_size, userId];
+/*   console.log(inputData); */
+  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size, userID) VALUES ($1, $2, $3, $4) RETURNING id;';
   pool.query(logEntry, inputData, (error, insertResult) => {
   /* this error is anything that goes wrong with the query */
     if (error) {
@@ -89,7 +90,8 @@ app.get('/note/:index', (req, res) => {
   let resultOut; */
   const { index } = req.params;
   const dataIndex = [index];
-  const get1Row = 'SELECT * FROM notes WHERE id = $1;';
+  /* const get1Row = 'SELECT * FROM notes WHERE id = $1;'; */
+  const get1Row = 'SELECT notes.id AS notes_id, notes.date, notes.userid AS notes_userID, users.id AS users_id, users.email FROM notes INNER JOIN users ON notes.userid = users.id WHERE notes.userid = $1;';
   pool.query(get1Row, dataIndex, (err, results) => {
     if (err) {
       console.log('client query error =', err);
@@ -97,7 +99,7 @@ app.get('/note/:index', (req, res) => {
     }
     console.log(results.rows[0]);
     const resultOut = results.rows[0];
-    const content = { index:index, date: resultOut.date,  behaviour: resultOut.behaviour, flockSize: resultOut.flock_size };
+    const content = { index:index, date: resultOut.date,  behaviour: resultOut.behaviour, flockSize: resultOut.flock_size, userId: resultOut.email };
     res.render('sighting', content);
   });
 });
@@ -111,9 +113,9 @@ app.get('/', (_, res) => {
       console.log('client query error =', err);
       return;
     }
-    console.log(results.rows);
+    /* console.log(results.rows); */
     const dbObjArr = {results: results.rows};
-    console.log(dbObjArr);
+    /* console.log(dbObjArr); */
 /*     response.send('pushed data from DB to front-end, not yet rendered page'); */
     res.render('home', dbObjArr);
   });
@@ -168,7 +170,6 @@ app.delete('/note/:index', (req, res) => {
 
 
 /* ########## USER AUTH BELOW  ############################ */
-
 /* Render SIGN UP FORM */
 app.get('/signup', (req, res) => {
   res.render('signUp');
@@ -247,20 +248,15 @@ app.get('/user-dashboard', (req, res) => {
     res.status(403).send('sorry, Please Log In....');
     return;
   }
-
+  res.send('logged into user-dashboard');
 });
 
 /* Log User out, delete their cookie */
-app.delete('/logout', (req, res) => { 
-  res.render('home');
+app.delete('/logout', (req, res) => {
+  res.clearCookie('loggedIn');
+  res.clearCookie('user_id');
+  res.send('cookies cleared');
 });
-
-
-
-
-
-
-
 
 /* ########## USER AUTH ABOVE  ############################ */
 
