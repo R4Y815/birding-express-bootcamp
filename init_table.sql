@@ -97,5 +97,3 @@ ON notes.userid = users.id
 INNER JOIN species 
 ON notes.species_id = species.id 
 WHERE notes.userid = 1;
-
---it commit -m "3.POCE.7:BASICS done. Species Drop-Down when writing new log and shown on new Note."

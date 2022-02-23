@@ -6,7 +6,6 @@ import cookieParser from 'cookie-parser';
 /* import { add, read, edit, write } from './jsonFileStorage.js'; */
 /* import { checkNullEntry } from './validation.js'; */
 
-
 /* POSTGRESQL STACK BELOW */
 /* Connecting database to server */
 const { Pool } = pg;
@@ -35,7 +34,7 @@ app.use(express.static('public'));
 // Set view engine
 app.set('view engine', 'ejs');
 
-/* query done callback */ 
+/* query done callback */
 const whenQueryDone = (error, result) => {
   /* this error is anything that goes wrong with the query */
   if (error) {
@@ -44,10 +43,7 @@ const whenQueryDone = (error, result) => {
     /* rows key has the data */
     console.log(result.rows);
   }
-
 };
-
-
 
 /* POSTGRESQL STACK ABOVE */
 
