@@ -20,14 +20,24 @@
                     <label for="date" class="mb-3"><b>Date :</b></label>  
                     <input type="textarea" name="date" id="date" class="dateTime" value="YYYY-MM-DD">
                   </div>
-                                    <div>
+                  <div>
+                    <select name="species_id">
+                      <% species.forEach((specie) => { %>
+                        <option value="<%= specie.id %>"><%= specie.name %> [ <%= specie.scientific_name%> ]</option>
+                      
+                        <% }); %>
+                    </select>
+            
+                  </div>   
+                  <label for="flock_size" class="mb-3"><b>Flock Size:</b></label>  
+                    <input type="number" name="flock_size" id="flock_size">
+                  </div>
+                  <div>
                     <label for="behaviour" class="mb-2"><b>Behaviour:</b></label><br>  
                     <textarea name ="behaviour" id="behaviour" class="smBox mb-2"></textarea>   
                   </div>
                   <div>
-                    <label for="flock_size" class="mb-3"><b>Flock Size:</b></label>  
-                    <input type="number" name="flock_size" id="flock_size">
-                  </div>
+                    
                   <!-- <div>
                     <label for="state" class="mb-3" ><b>State:</b></label>  
                     <input type="text" name="state" id="state">

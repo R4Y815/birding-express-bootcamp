@@ -13,7 +13,7 @@ const { Pool } = pg;
 const pgConnectionConfigs = {
   user: 'raytor27',
   host: 'localhost',
-  database: 'birding',
+  database: 'raytor27',
   port: 5432, // Postgres server always runs on this port
 };
 
@@ -53,7 +53,12 @@ const whenQueryDone = (error, result) => {
 
 /* NEW NOTE: RENDER  */
 function newNoteEntry(_, res) {
-  res.render('newSighting');
+  pool.query('SELECT * from species ORDER BY name ASC ;', (error, result) => {
+    const data = {
+      species: result.rows,
+    };
+    res.render('newSighting', data);
+  });
 }
 
 app.get('/note', newNoteEntry);
@@ -65,11 +70,11 @@ app.post('/note', (req, res) => {
   const userId = req.cookies.user_id;
   const formSubmitted = req.body;
   const formData = JSON.parse(JSON.stringify(formSubmitted));
-/*   console.log(req.body);
-  console.log(formData); */
-  const inputData = [formData.date, formData.behaviour, formData.flock_size, userId];
+  /* console.log(req.body); */
+  console.log(formData);
+  const inputData = [formData.date, formData.behaviour, formData.flock_size, formData.species_id, userId];
 /*   console.log(inputData); */
-  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size, userID) VALUES ($1, $2, $3, $4) RETURNING id;';
+  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size, species_id, userID) VALUES ($1, $2, $3, $4, $5) RETURNING id;';
   pool.query(logEntry, inputData, (error, insertResult) => {
   /* this error is anything that goes wrong with the query */
     if (error) {
@@ -80,7 +85,8 @@ app.post('/note', (req, res) => {
     const index = insertResult.rows[0].id;
     console.log('index =', index);
 
-    res.redirect(301, `http://localhost:${port}/note/${index}`);
+    res.send('new log successfully created');
+    /* res.redirect(301, `http://localhost:${port}/note/${index}`); */
   });
 });
 
@@ -91,7 +97,7 @@ app.get('/note/:index', (req, res) => {
   const { index } = req.params;
   const dataIndex = [index];
   /* const get1Row = 'SELECT * FROM notes WHERE id = $1;'; */
-  const get1Row = 'SELECT notes.id AS notes_id, notes.date, notes.userid AS notes_userID, users.id AS users_id, users.email FROM notes INNER JOIN users ON notes.userid = users.id WHERE notes.userid = $1;';
+  const get1Row = 'SELECT notes.id, notes.date, notes.behaviour, notes.flock_size, users.email,  species.name, species.scientific_name FROM notes INNER JOIN users ON notes.userid = users.id INNER JOIN species ON notes.species_id = species.id WHERE notes.userid = $1;';
   pool.query(get1Row, dataIndex, (err, results) => {
     if (err) {
       console.log('client query error =', err);
@@ -99,7 +105,7 @@ app.get('/note/:index', (req, res) => {
     }
     console.log(results.rows[0]);
     const resultOut = results.rows[0];
-    const content = { index:index, date: resultOut.date,  behaviour: resultOut.behaviour, flockSize: resultOut.flock_size, userId: resultOut.email };
+    const content = { index: index, date: resultOut.date, species: resultOut.name, scienName: resultOut.scientific_name, behaviour: resultOut.behaviour, flockSize: resultOut.flock_size, userId: resultOut.email };
     res.render('sighting', content);
   });
 });
