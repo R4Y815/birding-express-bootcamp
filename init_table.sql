@@ -1,5 +1,5 @@
 -- psql -d birding -f init_table.sql 
-
+-- 
 DROP TABLE IF EXISTS notes;
 DROP TABLE IF EXISTS users;
 
