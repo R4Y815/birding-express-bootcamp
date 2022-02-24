@@ -47,6 +47,63 @@ const whenQueryDone = (error, result) => {
 
 /* POSTGRESQL STACK ABOVE */
 
+/* NEW ROUTE TO SHOW BEHAVIOUR CHECKBOXES */
+app.get('/note/:index/behaviours/add', (req, res) => {
+  const { index } = req.params;
+  pool.query('select * from behaviours ORDER BY activity ASC ', (error, result) => {
+    const data = { noteId: index,
+      behaviours: result.rows,
+    };
+    console.log(result.rows);
+    res.render('behaviours', data);
+  });
+});
+
+/* POST ROUTE TEST FOR BEHAVIOUR CATEGORIES */
+/* app.post('/note/:index/behaviours', (req, res) => {
+  const { index } = req.params;
+  console.log('behaviour table IDs =', req.body.behaviour_ids);  */
+   /* will be an array of numbers */
+/*   res.send('works');
+});
+ */
+/* Loop over the array of selected categories and insert the relevant entries to join table */
+/* join table = note_behaviours */
+app.post('/note/:noteId/behaviours', (req, res) => {
+  console.log('req.body.behaviour_ids =', req.body.behaviour_ids);
+  /* get the note id url param */
+  const { noteId } = req.params;
+  console.log('noteId =', noteId);
+  const queryString =
+    'INSERT INTO note_behaviours (note_id, behaviour_id) VALUES ($1, $2);';
+  let queryDoneCounter = 0;
+  /* for each behaviour category we have in the request, make an insert query */
+  req.body.behaviour_ids.forEach((behaviourId, index) => {
+    /* construct the set of values we are inserting */
+    const values = [noteId, behaviourId];
+    console.log('values =', values);
+    pool.query(queryString, values, (error, result) => {
+      /* query is done */
+      /* console.log(result); */
+      /* increment the counter, another query is done */
+      queryDoneCounter += 1;
+
+      /* check to see if all the queries are done */
+      if (queryDoneCounter === req.body.behaviour_ids.length) {
+        /* TODO: check if any of the queries had errors. */
+
+        /* all the queries are done, send a response. */
+        res.send('done!');
+      }
+    });
+  });
+
+
+});
+
+
+
+
 /* NEW NOTE: RENDER  */
 function newNoteEntry(_, res) {
   pool.query('SELECT * from species ORDER BY name ASC ;', (error, result) => {
@@ -68,9 +125,9 @@ app.post('/note', (req, res) => {
   const formData = JSON.parse(JSON.stringify(formSubmitted));
   /* console.log(req.body); */
   console.log(formData);
-  const inputData = [formData.date, formData.behaviour, formData.flock_size, formData.species_id, userId];
+  const inputData = [formData.date, formData.flock_size, formData.species_id, userId];
 /*   console.log(inputData); */
-  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size, species_id, userID) VALUES ($1, $2, $3, $4, $5) RETURNING id;';
+  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size, species_id, userID) VALUES ($1, $2, $3, $4) RETURNING id;';
   pool.query(logEntry, inputData, (error, insertResult) => {
   /* this error is anything that goes wrong with the query */
     if (error) {
@@ -86,22 +143,31 @@ app.post('/note', (req, res) => {
   });
 });
 
-/* specific note */
+/* SPECIFIC NOTE*/
 app.get('/note/:index', (req, res) => {
 /*   let sighting;
   let resultOut; */
   const { index } = req.params;
   const dataIndex = [index];
   /* const get1Row = 'SELECT * FROM notes WHERE id = $1;'; */
-  const get1Row = 'SELECT notes.id, notes.date, notes.behaviour, notes.flock_size, users.email,  species.name, species.scientific_name FROM notes INNER JOIN users ON notes.userid = users.id INNER JOIN species ON notes.species_id = species.id WHERE notes.userid = $1;';
+  const get1Row = 'SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email FROM notes INNER JOIN users ON notes.userid = users.id INNER JOIN species ON notes.species_id = species.id INNER JOIN note_behaviours ON notes.id = note_behaviours.note_id INNER JOIN behaviours ON note_behaviours.behaviour_id = behaviours.id WHERE notes.id = $1;';
+
+ let queryDoneCounter = 0;
+
+
   pool.query(get1Row, dataIndex, (err, results) => {
     if (err) {
       console.log('client query error =', err);
       return;
     }
-    console.log(results.rows[0]);
+    const activityArr = [];
+    results.rows.forEach((row) => {
+      activityArr.push(row.activity);
+    });
+    console.log('activityArr=', activityArr);
     const resultOut = results.rows[0];
-    const content = { index: index, date: resultOut.date, species: resultOut.name, scienName: resultOut.scientific_name, behaviour: resultOut.behaviour, flockSize: resultOut.flock_size, userId: resultOut.email };
+    console.log('resultOut.activity.length=', resultOut.activity.length);
+    const content = { index: index, date: resultOut.date, speciesName: resultOut.species_name, scienName: resultOut.scientific_name, behaviours: activityArr, flockSize: resultOut.flock_size, userId: resultOut.email };
     res.render('sighting', content);
   });
 });
@@ -116,7 +182,7 @@ app.get('/', (_, res) => {
       return;
     }
     /* console.log(results.rows); */
-    const dbObjArr = {results: results.rows};
+    const dbObjArr = { results: results.rows };
     /* console.log(dbObjArr); */
 /*     response.send('pushed data from DB to front-end, not yet rendered page'); */
     res.render('home', dbObjArr);

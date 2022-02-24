@@ -15,7 +15,6 @@
             <div class="row px-0 ">
               <div class ="col-12 px-0">
                 <form action="/note" method="POST">
-
                   <div>
                     <label for="date" class="mb-3"><b>Date :</b></label>  
                     <input type="textarea" name="date" id="date" class="dateTime" value="YYYY-MM-DD">
@@ -23,43 +22,19 @@
                   <div>
                     <select name="species_id">
                       <% species.forEach((specie) => { %>
-                        <option value="<%= specie.id %>"><%= specie.name %> [ <%= specie.scientific_name%> ]</option>
-                      
+                        <option value="<%= specie.id %>"><%= specie.name %> [ <%= specie.scientific_name%> ]</option>  
                         <% }); %>
                     </select>
-            
                   </div>   
                   <label for="flock_size" class="mb-3"><b>Flock Size:</b></label>  
                     <input type="number" name="flock_size" id="flock_size">
                   </div>
-                  <div>
-                    <label for="behaviour" class="mb-2"><b>Behaviour:</b></label><br>  
-                    <textarea name ="behaviour" id="behaviour" class="smBox mb-2"></textarea>   
-                  </div>
-                  <div>
-                    
-                  <!-- <div>
-                    <label for="state" class="mb-3" ><b>State:</b></label>  
-                    <input type="text" name="state" id="state">
-                  </div>
-                  <div>
-                    <label for="shape" class="mb-3"><b>Shape:</b></label>  
-                    <input type="text" name="shape" id="shape">   
-                  </div>
-                  <div>
-                    <label for="duration" class="mb-3"><b>Duration(mins):</b></label>  
-                    <input type="text" name="duration" id="duration">   
-                  </div>        
-                  <div>
-                    <label for="text" class="mb-1"><b>Report:</b></label><br>   
-                    <textarea name ="text" id="text" class="txtBox mb-3"></textarea>   
-                  </div>
-                  <div> -->
+
+                  <div> 
                   <input type="hidden" name="created_Date" value="created-<%= Date() %>"></div>
                   <div class="row justify-content-center">
                     <div class="col-auto"><input type="submit" value="Submit"></div>
                   </div> 
-                  </form>
                 </form>
               </div> 
             </div>     

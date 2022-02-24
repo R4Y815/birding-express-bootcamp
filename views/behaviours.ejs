@@ -1,0 +1,46 @@
+<%- include('headerGlobal'); -%>
+<h1 class="topSpacer"><p></p>.</h1>
+  
+  </div>
+</div>
+<p></p>
+<div class="container ">
+  <div class="row justify-content-center">
+    <div class="card " style="width: 90vw;">
+      <ul class="list-group list-group-flush">
+        <p></p>
+         <h2 class="text-center">Behaviours List</h2>
+        <li class="list-group-item ">
+          <div class="row justify-content-center">
+            <div class="row px-0 ">
+              <div class ="col-12 px-0">
+                <form action="/note/<%= noteId %>/behaviours" method="POST">
+                  <div>
+                    
+                      <% behaviours.forEach((behaviour) => { %>
+                      <div> <label><%= behaviour.activity %></label>
+                        <input type="checkbox" name="behaviour_ids" value="<%=  behaviour.id %>" /> 
+                      <% }); %> 
+                      <input type="text" name="label" />
+                      </div>
+                    <div> 
+                      <input type="hidden" name="created_Date" value="created-<%= Date() %>">
+                    </div>
+                  </div>
+                  <div class="row justify-content-center">
+                    <div class="col-auto">
+                      <input type="submit" value="Submit">
+                    </div>
+                  </div> 
+                </form>
+              </div> 
+            </div>     
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<%- include('footer'); -%>
+
+           

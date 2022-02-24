@@ -22,8 +22,6 @@
               <div class ="col-auto"><%= result.date %></div> |
               <div class ="col-auto">Flock of <%= result.flock_size %></div> 
             </div>    
-            <div class="row">
-              <div class ="col-10"><i><%= result.behaviour %></i></div>
               <div class ="col-2 text-end">
                 <form action="/note/<%=result.id%>?_method=DELETE" method="POST">  
                   <button type="submit" class="btn-sm">Del</button>

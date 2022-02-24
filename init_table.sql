@@ -1,8 +1,12 @@
 -- psql -d birding -f init_table.sql 
 
+DROP TABLE IF EXISTS note_behaviours;
+DROP TABLE IF EXISTS behaviours;
 DROP TABLE IF EXISTS notes;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS species;
+
+
 
 -- ONE user to MANY notes, ONE note to ONE user
 CREATE TABLE users (
@@ -18,11 +22,18 @@ CREATE TABLE species (
   scientific_name TEXT
 );
 
--- MANY
+-- ONE behaviour to MANY notes, ONE note to MANY behaviours 
+CREATE TABLE behaviours (
+  id SERIAL PRIMARY KEY, 
+  activity TEXT
+);
+
+
+-- ONE note to only ONE SPECIES, to only ONE USER, but TO MANY BEHAVIOURS
+-- behaves like join table?
 CREATE TABLE notes (
   id SERIAL PRIMARY KEY, 
   date TEXT, 
-  behaviour TEXT,
   flock_size INTEGER,
   userid INTEGER,
   CONSTRAINT fk_user
@@ -32,6 +43,20 @@ CREATE TABLE notes (
   CONSTRAINT fk_species
       FOREIGN KEY(species_id)
       REFERENCES species(id) /* reference always tagged to Category table */
+);
+
+CREATE TABLE note_behaviours (
+  id SERIAL PRIMARY KEY,
+  note_id INTEGER,
+  CONSTRAINT fk_note
+     FOREIGN KEY(note_id)
+     REFERENCES notes(id)
+     ON DELETE CASCADE,
+  behaviour_id INTEGER,
+    CONSTRAINT fk_behaviour
+      FOREIGN KEY(behaviour_id)
+      REFERENCES behaviours(id)
+      ON DELETE CASCADE
 );
 
 
@@ -54,46 +79,44 @@ INSERT into species (name, scientific_name) VALUES
 ('Plume-toed Swiftlet', 'Collocalia affinis'),
 ('Little Green Pigeon', 'Treron fulvicollis');
 
-INSERT INTO notes (date, behaviour, flock_size, species_id, userid) VALUES 
-('2018-02-22', 'flappy flappy flappy', 8, 11, 1),
-('2021-08-19', 'jumpy jump hatch egg', 9, 4, 2),
-('2021-19-24', 'Younglings were about to jump', 5, 6, 3),
-('2022-02-15','The red birds spotted a grey car', 3, 10, 1);
+INSERT INTO behaviours (activity) VALUES 
+('Resting'),
+('Song: Long'),
+('Song: Short'),
+('Preening'),
+('Perched'),
+('Hunting'),
+('Foraging'),
+('Bathing'),
+('Gathering Nesting Materials'),
+('Feeding Young'),
+('Mating'),
+('Flying'),
+('Drinking');
 
--- JOIN notes to users
-SELECT notes.id AS notes_id, notes.date, notes.userid AS notes_userID, users.id AS users_id, users.email 
+INSERT INTO notes (date, flock_size, species_id, userid) VALUES 
+('2018-02-22', 8, 11, 1),
+('2021-08-19', 9, 4, 2),
+('2021-19-24', 5, 6, 3),
+('2022-02-15', 3, 10, 1);
+
+
+--- do not add first. can be added through the webpage app
+INSERT INTO note_behaviours (note_id, behaviour_id) VALUES
+(1, 12),
+(2, 3),
+(3, 6),
+(4, 8);
+
+-- connect user, notes, species names, behaviour tables together
+SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email
 FROM notes
 INNER JOIN users
 ON notes.userid = users.id
-WHERE notes.userid = 3;
-
--- based on userid, return email
-SELECT users.email 
-FROM notes
-INNER JOIN users
-ON notes.userid = users.id
-WHERE notes.userid = 3; -- or user id variable
-
--- show users' notes based on user email 
-SELECT notes.id AS notes_id, notes.date, notes.behaviour, notes.flock_size, users.email
-FROM notes
-INNER JOIN users
-ON notes.userid = users.id
-WHERE notes.userid = 1;
-
--- show name of bird with notes, user,
-
-SELECT notes.id AS notes_id, notes.date, users.email, species.name AS species_name, notes.flock_size
-FROM users
-INNER JOIN notes
-ON notes.userid = users.id
-INNER JOIN species 
-ON notes.species_id = species.id;
-
-SELECT notes.id, notes.date, notes.behaviour, notes.flock_size, users.email,  species.name, species.scientific_name
-FROM notes 
-INNER JOIN users 
-ON notes.userid = users.id 
-INNER JOIN species 
-ON notes.species_id = species.id 
-WHERE notes.userid = 1;
+INNER JOIN species
+ON notes.species_id = species.id
+INNER JOIN note_behaviours
+ON notes.id = note_behaviours.note_id
+INNER JOIN behaviours
+ON note_behaviours.behaviour_id = behaviours.id
+WHERE notes.id = 1;

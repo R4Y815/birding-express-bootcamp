@@ -15,10 +15,12 @@
             <div class="row px-0 ">
               <div class ="col-12 px-0">
                 <div><b>Date:</b> <%= date %></div>
-                <div><b>Common Species Name:</b> <%= species %></div>
+                <div><b>Common Species Name:</b> <%= speciesName %></div>
                 <div><b>Scientific Species Name:</b><i> <%= scienName %></i></div>
-                <div><b>Behaviour:</b> <%= behaviour%></div>
                 <div><b>Flock Size:</b> <%= flockSize %></div>
+                <div><b>Behaviour:</b></div> <% behaviours.forEach((behaviour) => { %>
+                <div> <%= behaviour %>,</div>  
+                <% }); %>   
                 <div><b>Logged by User email:</b> <%= userId %></div>
 
                 <p></p>
