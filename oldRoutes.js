@@ -110,3 +110,30 @@ app.delete('/sighting/:index', (request, response) => {
     });
   });
 });
+
+/* CREATE NEW NOTE: POST */
+app.post('/note', (req, res) => {
+  console.dir(req.cookies.loggedIn);
+  console.dir(req.cookies.user_id);
+  const userId = req.cookies.user_id;
+  const formSubmitted = req.body;
+  const formData = JSON.parse(JSON.stringify(formSubmitted));
+  /* console.log(req.body); */
+  console.log(formData);
+  const inputData = [formData.date, formData.flock_size, formData.species_id, userId];
+/*   console.log(inputData); */
+  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size, species_id, userID) VALUES ($1, $2, $3, $4) RETURNING id;';
+  pool.query(logEntry, inputData, (error, insertResult) => {
+  /* this error is anything that goes wrong with the query */
+    if (error) {
+      console.log('error', error);
+    }
+    /* rows key has the data */
+    console.log(insertResult.rows);
+    const index = insertResult.rows[0].id;
+    console.log('index =', index);
+
+    res.send('new log successfully created');
+    /* res.redirect(301, `http://localhost:${port}/note/${index}`); */
+  });
+});

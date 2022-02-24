@@ -19,7 +19,7 @@ const pgConnectionConfigs = {
 const pool = new Pool (pgConnectionConfigs);
 
 const app = express();
-const port = 3008;
+const port = 3010;
 
 /* cookie functinality within js */
 app.use(cookieParser());
@@ -97,20 +97,23 @@ app.post('/note/:noteId/behaviours', (req, res) => {
       }
     });
   });
-
-
 });
-
-
-
 
 /* NEW NOTE: RENDER  */
 function newNoteEntry(_, res) {
-  pool.query('SELECT * from species ORDER BY name ASC ;', (error, result) => {
-    const data = {
-      species: result.rows,
-    };
-    res.render('newSighting', data);
+  pool.query('SELECT * from species ORDER BY name ASC ;', (errorSpecies, resultSpecies) => {
+    if (errorSpecies) {
+      console.log('Error at Species Query =', errorSpecies);
+      return;
+    }
+    pool.query('select * from behaviours ORDER BY activity ASC ', (errorBehaviours, resultBehaviours) => {
+      if (errorBehaviours) {
+        console.log('Error at Behaviours Query =', errorBehaviours);
+        return;
+      }
+      const data = { species: resultSpecies.rows, behaviours: resultBehaviours.rows};
+      res.render('newSighting', data);
+    });
   });
 }
 
@@ -125,21 +128,34 @@ app.post('/note', (req, res) => {
   const formData = JSON.parse(JSON.stringify(formSubmitted));
   /* console.log(req.body); */
   console.log(formData);
-  const inputData = [formData.date, formData.flock_size, formData.species_id, userId];
-/*   console.log(inputData); */
-  const logEntry = 'INSERT INTO notes (date, behaviour, flock_size, species_id, userID) VALUES ($1, $2, $3, $4) RETURNING id;';
-  pool.query(logEntry, inputData, (error, insertResult) => {
+  const notesInput = [formData.date, formData.flock_size, formData.species_id, userId];
+/*   console.log(notesInput); */
+  const notesEntry = 'INSERT INTO notes (date, flock_size, species_id, userID) VALUES ($1, $2, $3, $4) RETURNING id;';
+  const noteBehavInput = formData.behaviour_ids;
+  console.log('noteBehavInput =', noteBehavInput);
+  pool.query(notesEntry, notesInput, (error, insertResult) => {
   /* this error is anything that goes wrong with the query */
     if (error) {
       console.log('error', error);
     }
     /* rows key has the data */
     console.log(insertResult.rows);
-    const index = insertResult.rows[0].id;
-    console.log('index =', index);
+    const noteId = insertResult.rows[0].id;
+    console.log('noteId =', noteId);
 
-    res.send('new log successfully created');
-    /* res.redirect(301, `http://localhost:${port}/note/${index}`); */
+    const noteQueryString = 'INSERT INTO note_behaviours (note_id, behaviour_id) VALUES ($1, $2);';
+    let queryDoneCounter = 0;
+    console.log('noteBehavInput.length =', noteBehavInput.length);
+    noteBehavInput.forEach((behaviourId, index) => {
+      const values = [noteId, behaviourId];
+      pool.query(noteQueryString, values, (errorNote, resultNote) => {
+        queryDoneCounter += 1;
+        if (queryDoneCounter === noteBehavInput.length) {
+          /* res.send('new log successfully created'); */
+          res.redirect(301, `http://localhost:${port}/note/${noteId}`);
+        }
+      });
+    });
   });
 });
 
@@ -160,13 +176,13 @@ app.get('/note/:index', (req, res) => {
       console.log('client query error =', err);
       return;
     }
+    /* behaviour ids after 1st ones output in rows after row[0] */
     const activityArr = [];
     results.rows.forEach((row) => {
       activityArr.push(row.activity);
     });
     console.log('activityArr=', activityArr);
     const resultOut = results.rows[0];
-    console.log('resultOut.activity.length=', resultOut.activity.length);
     const content = { index: index, date: resultOut.date, speciesName: resultOut.species_name, scienName: resultOut.scientific_name, behaviours: activityArr, flockSize: resultOut.flock_size, userId: resultOut.email };
     res.render('sighting', content);
   });
