@@ -162,24 +162,32 @@ app.post('/note', (req, res) => {
 });
 
 /* COMMENT COMPOSER */
-app.post('note/:noteId/comment', (req, res) => {
-  const { noteId } = req.params;
-  const commentData = req.body;
-
-
-
-
+app.post('/note/:index/comment', (req, res) => {
+  const { index } = req.params;
+  console.log('noteId = ', index);
+  const commentData = JSON.parse(JSON.stringify(req.body));
+  console.log('commentData = ', commentData);
+  const commentInput = [index, commentData.comments, commentData.commenter_name];
+  const commentQuery = 'INSERT INTO comments (c_note_id, comment_text, commenter ) VALUES ($1, $2, $3);';
+  pool.query(commentQuery, commentInput, (err, results) => {
+    if (err) {
+      console.log('Comment Query Submit Error =', err);
+      return;
+    }
+    res.send('comment sent out via POST successful');
+  });
 });
 
 /* SPECIFIC NOTE */
 app.get('/note/:index', (req, res) => {
-/*   let sighting;
-  let resultOut; */
-  const { loggedInUserId } = req.cookies.user_id;
+  console.dir(req.cookies.userEmail);
+  const loggedInUserEmail = req.cookies.userEmail;
+  console.dir(loggedInUserEmail);
   const { index } = req.params;
   const dataIndex = [index];
   /* const get1Row = 'SELECT * FROM notes WHERE id = $1;'; */
-  const get1Row = 'SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email FROM notes INNER JOIN users ON notes.userid = users.id INNER JOIN species ON notes.species_id = species.id INNER JOIN note_behaviours ON notes.id = note_behaviours.note_id INNER JOIN behaviours ON note_behaviours.behaviour_id = behaviours.id WHERE notes.id = $1;';
+  /* break up into separate queries, too many joins */
+  const get1Row = 'SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email, comments.comment_text, comments.commenter FROM notes INNER JOIN users ON notes.userid = users.id INNER JOIN species ON notes.species_id = species.id INNER JOIN note_behaviours ON notes.id = note_behaviours.note_id INNER JOIN behaviours ON note_behaviours.behaviour_id = behaviours.id INNER JOIN comments ON notes.id = comments.c_note_id WHERE notes.id = $1;';
 
   pool.query(get1Row, dataIndex, (err, results) => {
     if (err) {
@@ -193,8 +201,9 @@ app.get('/note/:index', (req, res) => {
     });
     console.log('activityArr=', activityArr);
     const resultOut = results.rows[0];
+    console.log(resultOut);
     const content = {
-      index: index, date: resultOut.date, speciesName: resultOut.species_name, scienName: resultOut.scientific_name, behaviours: activityArr, flockSize: resultOut.flock_size, logger: resultOut.email, userId:loggedInUserId
+      index: index, date: resultOut?.date, speciesName: resultOut.species_name, scienName: resultOut.scientific_name, behaviours: activityArr, flockSize: resultOut.flock_size, logger: resultOut.email, userId:loggedInUserEmail, comment: resultOut?.comment_text, commentWriter: resultOut?.commenter
     };
     res.render('sighting', content);
   });
@@ -324,6 +333,7 @@ app.post('/login', (req, res) => {
     if (user.password === req.body.password) {
       res.cookie('loggedIn', true);
       res.cookie('user_id', user.id);
+      res.cookie('userEmail', user.email);
       res.send('logged in');
      } else{
       /* password didn't match */

@@ -1,12 +1,11 @@
 -- psql -d birding -f init_table.sql 
 
+DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS note_behaviours;
 DROP TABLE IF EXISTS behaviours;
 DROP TABLE IF EXISTS notes;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS species;
-
-
 
 -- ONE user to MANY notes, ONE note to ONE user
 CREATE TABLE users (
@@ -38,11 +37,13 @@ CREATE TABLE notes (
   userid INTEGER,
   CONSTRAINT fk_user
       FOREIGN KEY(userID)
-      REFERENCES users(id), /* reference always tagged to Category table */
+      REFERENCES users(id) /* reference always tagged to Category table */
+      ON DELETE CASCADE,
   species_id INTEGER,
   CONSTRAINT fk_species
       FOREIGN KEY(species_id)
       REFERENCES species(id) /* reference always tagged to Category table */
+      ON DELETE CASCADE
 );
 
 CREATE TABLE note_behaviours (
@@ -57,6 +58,17 @@ CREATE TABLE note_behaviours (
       FOREIGN KEY(behaviour_id)
       REFERENCES behaviours(id)
       ON DELETE CASCADE
+);
+
+-- ONE note can have MANY comments, each comment is only on ONE note
+CREATE TABLE comments (
+  id SERIAL PRIMARY KEY, 
+  commenter TEXT,
+  comment_text TEXT,
+  c_note_id INTEGER,
+     CONSTRAINT fk_note
+      FOREIGN KEY(c_note_id)
+      REFERENCES notes(id)
 );
 
 
@@ -108,8 +120,16 @@ INSERT INTO note_behaviours (note_id, behaviour_id) VALUES
 (3, 6),
 (4, 8);
 
+--- do not add first. can be added through the webpage app
+/* INSERT INTO comments (commenter, comment_text, c_note_id) VALUES
+
+
+ */
+
+
+
 -- connect user, notes, species names, behaviour tables together
-SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email
+SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email, comments.comment_text, comments.commenter
 FROM notes
 INNER JOIN users
 ON notes.userid = users.id
@@ -119,4 +139,19 @@ INNER JOIN note_behaviours
 ON notes.id = note_behaviours.note_id
 INNER JOIN behaviours
 ON note_behaviours.behaviour_id = behaviours.id
+INNER JOIN comments
+ON notes.id = comments.c_note_id
+WHERE notes.id = 1;
+
+
+
+SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email FROM notes 
+INNER JOIN users 
+ON notes.userid = users.id 
+INNER JOIN species 
+ON notes.species_id = species.id 
+INNER JOIN note_behaviours 
+ON notes.id = note_behaviours.note_id 
+INNER JOIN behaviours 
+ON note_behaviours.behaviour_id = behaviours.id 
 WHERE notes.id = 1;

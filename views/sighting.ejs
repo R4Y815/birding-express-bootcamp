@@ -36,7 +36,7 @@
               </div>
 
               <!-- COMMENTS ENTRY -->
-              <form action=":noteId/comment" method="POST">
+              <form action="/note/<%=index%>/comment" method="POST">
               <p></p>
               <div>
                 <!-- <label for="comments" class="mb-1"><b>Comments</b></label> -->
@@ -44,10 +44,10 @@
                 <textarea name ="comments" id="comments" class="txtBox mb-3" placeholder="key in your comments here"></textarea>   
               </div>
               <div>
-                <input type="hidden" name="created_Date" value="created-<%= userId %>">
+                <input type="hidden" name="commenter_name" value="<%= userId %>">
               </div>
               <div class="d-flex justify-content-end">
-                <input type="submit" value="Submit">
+                <input type="submit" value="Add Comment">
               </div>
               <!-- <div class="d-flex justify-content-end">
                 <label for="commenter" class="mb-1x">Comment by: </label>
@@ -56,11 +56,10 @@
               </form>
               <!-- COMMENTS DISPLAY -->
               <p></p>
-<!--               <div>
-                <div class ="cmtsCrdt"><i>by: <%= /* userId */ %>:</i></div>
-              <b>Comments</b>:</b><br> <%=  %>
-              </div> -->
-
+              <div>
+                <div class ="cmtsCrdt"><i><%= commentWriter %> commented:</i></div>
+              <br> <%= comment  %>
+              </div>
             </div>     
           </div>
         </li>
