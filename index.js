@@ -67,7 +67,9 @@ app.get('/note/:index/behaviours/add', (req, res) => {
 /*   res.send('works');
 });
  */
-/* Loop over the array of selected categories and insert the relevant entries to join table */
+
+
+/* LOOP OVER THE ARRAY of selected categories and insert the relevant entries to join table */
 /* join table = note_behaviours */
 app.post('/note/:noteId/behaviours', (req, res) => {
   console.log('req.body.behaviour_ids =', req.body.behaviour_ids);
@@ -159,17 +161,25 @@ app.post('/note', (req, res) => {
   });
 });
 
-/* SPECIFIC NOTE*/
+/* COMMENT COMPOSER */
+app.post('note/:noteId/comment', (req, res) => {
+  const { noteId } = req.params;
+  const commentData = req.body;
+
+
+
+
+});
+
+/* SPECIFIC NOTE */
 app.get('/note/:index', (req, res) => {
 /*   let sighting;
   let resultOut; */
+  const { loggedInUserId } = req.cookies.user_id;
   const { index } = req.params;
   const dataIndex = [index];
   /* const get1Row = 'SELECT * FROM notes WHERE id = $1;'; */
   const get1Row = 'SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email FROM notes INNER JOIN users ON notes.userid = users.id INNER JOIN species ON notes.species_id = species.id INNER JOIN note_behaviours ON notes.id = note_behaviours.note_id INNER JOIN behaviours ON note_behaviours.behaviour_id = behaviours.id WHERE notes.id = $1;';
-
- let queryDoneCounter = 0;
-
 
   pool.query(get1Row, dataIndex, (err, results) => {
     if (err) {
@@ -183,7 +193,9 @@ app.get('/note/:index', (req, res) => {
     });
     console.log('activityArr=', activityArr);
     const resultOut = results.rows[0];
-    const content = { index: index, date: resultOut.date, speciesName: resultOut.species_name, scienName: resultOut.scientific_name, behaviours: activityArr, flockSize: resultOut.flock_size, userId: resultOut.email };
+    const content = {
+      index: index, date: resultOut.date, speciesName: resultOut.species_name, scienName: resultOut.scientific_name, behaviours: activityArr, flockSize: resultOut.flock_size, logger: resultOut.email, userId:loggedInUserId
+    };
     res.render('sighting', content);
   });
 });

@@ -21,7 +21,7 @@
                 <div><b>Behaviour:</b></div> <% behaviours.forEach((behaviour) => { %>
                 <div> <%= behaviour %>,</div>  
                 <% }); %>   
-                <div><b>Logged by User email:</b> <%= userId %></div>
+                <div><b>Logged by User email:</b> <%= logger %></div>
 
                 <p></p>
                 <p></p>
@@ -34,6 +34,33 @@
                 </form>  
                 </div>
               </div>
+
+              <!-- COMMENTS ENTRY -->
+              <form action=":noteId/comment" method="POST">
+              <p></p>
+              <div>
+                <!-- <label for="comments" class="mb-1"><b>Comments</b></label> -->
+                <br>   
+                <textarea name ="comments" id="comments" class="txtBox mb-3" placeholder="key in your comments here"></textarea>   
+              </div>
+              <div>
+                <input type="hidden" name="created_Date" value="created-<%= userId %>">
+              </div>
+              <div class="d-flex justify-content-end">
+                <input type="submit" value="Submit">
+              </div>
+              <!-- <div class="d-flex justify-content-end">
+                <label for="commenter" class="mb-1x">Comment by: </label>
+                <input type="text" name="commenter" id="commenter">
+              </div> -->
+              </form>
+              <!-- COMMENTS DISPLAY -->
+              <p></p>
+<!--               <div>
+                <div class ="cmtsCrdt"><i>by: <%= /* userId */ %>:</i></div>
+              <b>Comments</b>:</b><br> <%=  %>
+              </div> -->
+
             </div>     
           </div>
         </li>
