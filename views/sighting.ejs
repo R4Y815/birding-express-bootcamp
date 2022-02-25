@@ -44,7 +44,7 @@
                 <textarea name ="comments" id="comments" class="txtBox mb-3" placeholder="key in your comments here"></textarea>   
               </div>
               <div>
-                <input type="hidden" name="commenter_name" value="<%= userId %>">
+                <input type="hidden" name="commenter_name" value="<%= user %>">
               </div>
               <div class="d-flex justify-content-end">
                 <input type="submit" value="Add Comment">
@@ -56,10 +56,13 @@
               </form>
               <!-- COMMENTS DISPLAY -->
               <p></p>
+            <% comments.forEach((detail) => { %>
               <div>
-                <div class ="cmtsCrdt"><i><%= commentWriter %> commented:</i></div>
-              <br> <%= comment  %>
-              </div>
+                <div class="cmtsCrdt"><%= Object.keys(detail) %> says:</div> 
+                 <div class="cmts"><i>"<%= Object.values(detail) %>."</i></div>          
+                </div> 
+                <p></p>
+                <% }); %>
             </div>     
           </div>
         </li>

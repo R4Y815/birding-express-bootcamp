@@ -180,39 +180,78 @@ app.post('/note/:index/comment', (req, res) => {
 
 /* SPECIFIC NOTE */
 app.get('/note/:index', (req, res) => {
+  
+  const loggedInUserEmail = { email: req.cookies.userEmail };
   console.dir(req.cookies.userEmail);
-  const loggedInUserEmail = req.cookies.userEmail;
   console.dir(loggedInUserEmail);
   const { index } = req.params;
   const dataIndex = [index];
   /* const get1Row = 'SELECT * FROM notes WHERE id = $1;'; */
   /* break up into separate queries, too many joins */
-  const get1Row = 'SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email, comments.comment_text, comments.commenter FROM notes INNER JOIN users ON notes.userid = users.id INNER JOIN species ON notes.species_id = species.id INNER JOIN note_behaviours ON notes.id = note_behaviours.note_id INNER JOIN behaviours ON note_behaviours.behaviour_id = behaviours.id INNER JOIN comments ON notes.id = comments.c_note_id WHERE notes.id = $1;';
+  const get1Row = 'SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email FROM notes INNER JOIN users ON notes.userid = users.id INNER JOIN species ON notes.species_id = species.id INNER JOIN note_behaviours ON notes.id = note_behaviours.note_id INNER JOIN behaviours ON note_behaviours.behaviour_id = behaviours.id WHERE notes.id = $1;';
 
-  pool.query(get1Row, dataIndex, (err, results) => {
-    if (err) {
-      console.log('client query error =', err);
+  pool.query(get1Row, dataIndex, (notesErr, notesResults) => {
+    if (notesErr) {
+      console.log('client query notesError =', notesErr);
       return;
     }
-    /* behaviour ids after 1st ones output in rows after row[0] */
-    const activityArr = [];
-    results.rows.forEach((row) => {
-      activityArr.push(row.activity);
-    });
-    console.log('activityArr=', activityArr);
-    const resultOut = results.rows[0];
-    console.log(resultOut);
-    const content = {
-      index: index, date: resultOut?.date, speciesName: resultOut.species_name, scienName: resultOut.scientific_name, behaviours: activityArr, flockSize: resultOut.flock_size, logger: resultOut.email, userId:loggedInUserEmail, comment: resultOut?.comment_text, commentWriter: resultOut?.commenter
-    };
+    
+    const dataComments = [index];
+    const getComments = 'SELECT * FROM comments WHERE c_note_id = $1;';
+    pool.query(getComments, dataComments, (commErr, commResults) => {
+      if (commErr) {
+        console.log('client query commError =', commErr);
+        return;
+      }
+
+      /* behaviour ids after 1st ones output in rows after row[0] */
+      const activityArr = [];
+      notesResults.rows.forEach((row) => {
+        activityArr.push(row.activity);
+      });
+      console.log('activityArr=', activityArr);
+      const resultOut = notesResults.rows[0];
+      console.log('resultOut =', resultOut);
+
+      /* both critics and comments must be in the same array or object */
+      const commsArr = { details: [] };
+      const emptyComments = { 'no comments yet': 'pls comment.' };
+      let commObj = {};
+ 
+      /*     commResults.rows.forEach((row) => {
+        if (row.commenter !== null && row.comment_text !== null) {
+          commObj = {};
+          commObj[row.commenter] = row.comment_text;
+          commsArr.push(commObj);
+        }
+      }); */
+
+      if (commResults !== []) {
+        for (let i = 0; i < commResults.rows.length; i += 1) {
+          commObj = {};
+          commObj[commResults.rows[i].commenter] = commResults.rows[i].comment_text;
+          commsArr.details.push(commObj);
+        }
+      } else {
+        commsArr.details.push(emptyComments);
+      }
+
+      console.log('commsArr =', commsArr);
+
+        const content = {
+        index: index, date: resultOut?.date, speciesName: resultOut.species_name, scienName: resultOut.scientific_name, behaviours: activityArr, flockSize: resultOut.flock_size, logger: resultOut?.email, user: loggedInUserEmail?.email, comments: commsArr?.details
+      };
+       console.log('content =', content);
+       /* res.send('Comm Array sent successfully'); */
     res.render('sighting', content);
+    });
   });
 });
 
 /* HOME PAGE to show list of BIRD peepings */
 app.get('/', (_, res) => {
   /* draw out data from postgresSQL */
-  const getAllRows = 'SELECT * FROM notes ORDER BY id ASC';
+  const getAllRows = 'SELECT notes.id, notes.date, species.name AS species_name, notes.flock_size FROM notes INNER JOIN species ON notes.species_id = species.id ORDER BY notes.id ASC;';
   pool.query(getAllRows, (err, results) => {
     if (err) {
       console.log('client query error =', err);
@@ -334,7 +373,7 @@ app.post('/login', (req, res) => {
       res.cookie('loggedIn', true);
       res.cookie('user_id', user.id);
       res.cookie('userEmail', user.email);
-      res.send('logged in');
+      res.render('loginLandingPage');
      } else{
       /* password didn't match */
       /* the error for the pw and email are the same */
@@ -342,7 +381,7 @@ app.post('/login', (req, res) => {
       /* security reasons, otherwise people can guess */
       /* if a person is a user of a given service. */
       res.cookie('loggedIn', undefined);
-      res.status(403).send("sorry!");
+      res.redirect(403, `http://localhost:${port}/login`);
     }
   });
 });
@@ -351,17 +390,18 @@ app.post('/login', (req, res) => {
 app.get('/user-dashboard', (req, res) => {
   console.log(req.cookies);
   if (req.cookies.loggedIn === undefined) {
-    res.status(403).send('sorry, Please Log In....');
+    res.status(403).send('sorry, Please go back to previous page and log in again....');
     return;
   }
-  res.send('logged into user-dashboard');
+  res.send('you have logged in');
 });
 
 /* Log User out, delete their cookie */
 app.delete('/logout', (req, res) => {
   res.clearCookie('loggedIn');
   res.clearCookie('user_id');
-  res.send('cookies cleared');
+  console.log('All cookies cleared');
+  res.render('loggedOutPage');
 });
 
 /* ########## USER AUTH ABOVE  ############################ */

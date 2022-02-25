@@ -21,16 +21,20 @@
             <div class="row">
               <div class ="col-auto"><%= result.date %></div> |
               <div class ="col-auto">Flock of <%= result.flock_size %></div> 
-            </div>    
-              <div class ="col-2 text-end">
+            </div>
+            <div class="row">
+              <div class="col-10">
+               <%= result.species_name %>
+              </div>
+              <div class="col-2 text-end">
                 <form action="/note/<%=result.id%>?_method=DELETE" method="POST">  
-                  <button type="submit" class="btn-sm">Del</button>
+                <button type="submit" class="btn-sm">Del</button>
                 </form>  
               </div>
-            </div>   
-          </div>
+            </div>     
+          </div>   
         </li>
-<% });%>
+      <% });%>
       </ul>
     </div>
   </div>

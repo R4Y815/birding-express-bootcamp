@@ -126,9 +126,30 @@ INSERT INTO note_behaviours (note_id, behaviour_id) VALUES
 
  */
 
+-- connect notes, species names, 
+SELECT notes.id, notes.date, species.name AS species_name, notes.flock_size 
+FROM notes  
+INNER JOIN species 
+ON notes.species_id = species.id
+ORDER BY notes.id ASC; -- DESC for descending
 
 
--- connect user, notes, species names, behaviour tables together
+
+-- connect user, notes, species names, behaviour tables 
+SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email FROM notes 
+INNER JOIN users 
+ON notes.userid = users.id 
+INNER JOIN species 
+ON notes.species_id = species.id 
+INNER JOIN note_behaviours 
+ON notes.id = note_behaviours.note_id 
+INNER JOIN behaviours 
+ON note_behaviours.behaviour_id = behaviours.id 
+WHERE notes.id = 1;
+
+
+
+-- connect user, notes, species names, behaviour tables and COMMENTs
 SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email, comments.comment_text, comments.commenter
 FROM notes
 INNER JOIN users
@@ -144,14 +165,3 @@ ON notes.id = comments.c_note_id
 WHERE notes.id = 1;
 
 
-
-SELECT notes.id AS notes_id, notes.date, species.name AS species_name, species.scientific_name, notes.flock_size, behaviours.activity, users.email FROM notes 
-INNER JOIN users 
-ON notes.userid = users.id 
-INNER JOIN species 
-ON notes.species_id = species.id 
-INNER JOIN note_behaviours 
-ON notes.id = note_behaviours.note_id 
-INNER JOIN behaviours 
-ON note_behaviours.behaviour_id = behaviours.id 
-WHERE notes.id = 1;
